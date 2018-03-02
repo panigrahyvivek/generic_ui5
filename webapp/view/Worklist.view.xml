@@ -18,7 +18,7 @@
 					path: '/Orders',
 					sorter: {
 						path: 'Freight',
-						descending: false
+						descending: true
 					}
 				}"
 				noDataText="{worklistView>/tableNoDataText}"
