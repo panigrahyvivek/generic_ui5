@@ -1,73 +1,38 @@
 #!groovy
 
-import com.sap.piper.Utils
-
-/**
- *	Copyright (c) 2017 SAP SE or an SAP affiliate company.  All rights reserved.
- *
- *	This software is the confidential and proprietary information of SAP
- *	("Confidential Information"). You shall not disclose such Confidential
- *	Information and shall use it only in accordance with the terms of the
- *	license agreement you entered into with SAP.
-*/
-
 @Library('piper-library-os') _
 
+// The coordinates of the central pipeline script
+def REPO
+def BRANCH
+def PATH
+
+// In case access to the repository containing the central pipeline
+// script is restricted the credentialsId of the credentials used for
+// accessing the repository needs to be provided below. The corresponding
+// credentials needs to be configured in Jenkins accordingly.
+def CREDENTIALS_ID
+
 node() {
-  //Global variables:
-  APP_PATH = 'src'
-  SRC = "${WORKSPACE}/${APP_PATH}"
-  CONFIG_FILE = "${SRC}/.pipeline/config.properties"
 
-  stage("Clone sources and setup environment"){
     deleteDir()
-    echo 'Checkpoint 3'
-    dir(APP_PATH) {
-      checkout scm
-      setupCommonPipelineEnvironment script: this, configFile: CONFIG_FILE
-    }
-    echo 'Checkpoint 1'
-    MTA_JAR_LOCATION = commonPipelineEnvironment.getConfigProperty('MTA_HOME')
-    NEO_HOME = commonPipelineEnvironment.getConfigProperty('NEO_HOME')
-    DEPLOY_HOST = commonPipelineEnvironment.getConfigProperty('DEPLOY_HOST')
-    CI_DEPLOY_ACCOUNT = commonPipelineEnvironment.getConfigProperty('CI_DEPLOY_ACCOUNT')
-    neoCredentialsId = commonPipelineEnvironment.getConfigProperty('neoCredentialsId')
-    proxy = commonPipelineEnvironment.getConfigProperty('proxy') ?: ''
-    httpsProxy = commonPipelineEnvironment.getConfigProperty('httpsProxy') ?: ''
-    echo 'Checkpoint 2'
-  }
 
-  stage("Validate configuration"){
-    echo '[INFO] Validating configuration.'
-    if (!MTA_JAR_LOCATION) error "The property 'MTA_HOME' is not configured. Please configure the property at '$CONFIG_FILE'."
-    if (!NEO_HOME) error "The property 'NEO_HOME' is not configured. Please configure the property at '$CONFIG_FILE'."
-    if (!DEPLOY_HOST) error "The property 'DEPLOY_HOST' is not configured. Please configure the property at '$CONFIG_FILE'."
-    if (!CI_DEPLOY_ACCOUNT) error "The property 'CI_DEPLOY_ACCOUNT' is not configured. Please configure the property at '$CONFIG_FILE'."
-    if (!neoCredentialsId) error "The property 'neoCredentialsId' is not configured. Please configure the property at '$CONFIG_FILE'."
-    echo '[INFO] The validation was successful.'
-  }
+    checkout scm
 
-  stage("Validate installations"){
-    echo '[INFO] Validating installation requirements.'
-    toolValidate tool: 'java', home: JAVA_HOME
-    toolValidate tool: 'mta', home: MTA_JAR_LOCATION
-    toolValidate tool: 'neo', home: NEO_HOME
-    echo '[INFO] The validation was successful.'
-  }
+    setupCommonPipelineEnvironment(script: this)
 
-  stage("Build Fiori App"){
-    dir(SRC){
-      withEnv(["http_proxy=${proxy}", "https_proxy=${httpsProxy}"]) {
-        MTAR_FILE_PATH = mtaBuild mtaJarLocation: MTA_JAR_LOCATION, buildTarget: 'NEO'
-      }
-    }
-  }
-  
-  stage("Deploy Fiori App"){
-    dir(SRC){
-      withEnv(["http_proxy=${proxy}", "https_proxy=${httpsProxy}"]) {
-        neoDeploy script: this, neoHome: NEO_HOME, archivePath: MTAR_FILE_PATH
-      }
-    }
-  }
+    // The coordinates of the central pipeline script
+    REPO = commonPipelineEnvironment.getConfigProperty('JENKINSFILE_GIT_URL')
+    BRANCH = commonPipelineEnvironment.getConfigProperty('JENKINSFILE_GIT_BRANCH')
+    PATH = commonPipelineEnvironment.getConfigProperty('JENKINSFILE_PATH')
+
+    // In case access to the repository containing the central pipeline
+    // script is restricted the credentialsId of the credentials used for
+    // accessing the repository needs to be provided below. The corresponding
+    // credentials needs to be configured in Jenkins accordingly.
+    CREDENTIALS_ID = commonPipelineEnvironment.getConfigProperty('JENKINSFILE_GIT_CREDENTIALS_ID')
 }
+
+echo "Launching pipeline '${PATH}' from '${BRANCH}@${REPO}' using credentialsId '${CREDENTIALS_ID}'."
+
+pipelineExecute repoUrl: REPO, branch: BRANCH, path: PATH, credentialsId: CREDENTIALS_ID
