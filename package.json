@@ -1,6 +1,6 @@
 {
-    "name": "<name of the package>",
-    "version": "<version of the package>",
+    "name": "generic_ui5_pkg",
+    "version": "1.0.0",
     "description": "<description of the package>",
     "private": true,     
     "devDependencies": {

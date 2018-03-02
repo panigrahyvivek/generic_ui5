@@ -21,10 +21,12 @@ node() {
 
   stage("Clone sources and setup environment"){
     deleteDir()
+    echo 'Checkpoint 3'
     dir(APP_PATH) {
       checkout scm
       setupCommonPipelineEnvironment script: this, configFile: CONFIG_FILE
     }
+    echo 'Checkpoint 1'
     MTA_JAR_LOCATION = commonPipelineEnvironment.getConfigProperty('MTA_HOME')
     NEO_HOME = commonPipelineEnvironment.getConfigProperty('NEO_HOME')
     DEPLOY_HOST = commonPipelineEnvironment.getConfigProperty('DEPLOY_HOST')
@@ -32,6 +34,7 @@ node() {
     neoCredentialsId = commonPipelineEnvironment.getConfigProperty('neoCredentialsId')
     proxy = commonPipelineEnvironment.getConfigProperty('proxy') ?: ''
     httpsProxy = commonPipelineEnvironment.getConfigProperty('httpsProxy') ?: ''
+    echo 'Checkpoint 2'
   }
 
   stage("Validate configuration"){
